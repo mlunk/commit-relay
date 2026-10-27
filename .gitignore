@@ -1,0 +1,20 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.env
+
+# Sensitive
+*.key
+*.pem
+secrets/
+
+# Python
+__pycache__/

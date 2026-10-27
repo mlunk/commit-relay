@@ -1,0 +1,93 @@
+name: Relay Turn Check
+
+# Every pull request into main is one leg of commit relay.
+# This check fails the PR unless it follows the rules in AGENTS.md:
+#   1. Exactly one commit.
+#   2. Built on the current tip of main (rebase if someone merged before you).
+#   3. HANDOFF.md was rewritten, and its "Turn:" number is the previous turn + 1.
+#   4. The commit subject starts with "Turn N:" matching HANDOFF.md.
+#   5. Only the host may touch the rules: .github/, AGENTS.md, CLAUDE.md,
+#      README.md, PLAYERS.md, GAME.md. The host is the "Host:" line in
+#      PLAYERS.md on main (so a PR can't make its author the host), or the
+#      repo owner.
+#
+# It runs on `pull_request` (not `pull_request_target`), so it has a read-only
+# token and no secrets. It only reads git history.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  turn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Check the turn
+        env:
+          COMMITS: ${{ github.event.pull_request.commits }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -u
+          fail=0
+          err() { echo "::error::$1"; fail=1; }
+
+          git fetch -q origin main
+          base=origin/main
+
+          # 1. Exactly one commit
+          if [ "$COMMITS" != "1" ]; then
+            err "A turn is exactly 1 commit; this PR has $COMMITS. Squash locally: git reset --soft origin/main && git commit"
+          fi
+
+          # 2. Built on the current tip of main
+          if ! git merge-base --is-ancestor "$base" HEAD; then
+            err "main has moved since you branched — someone else took a turn. Rebase onto origin/main, read the new HANDOFF.md, and redo your turn on top of it."
+          fi
+
+          changed=$(git diff --name-only "$base"...HEAD)
+          echo "Changed files:"; echo "$changed" | sed 's/^/  /'
+
+          # 3. HANDOFF.md rewritten, turn number incremented
+          if ! echo "$changed" | grep -qx 'HANDOFF.md'; then
+            err "Every turn must rewrite HANDOFF.md — that's the baton you pass to the next player."
+          fi
+          prev=$(git show "$base":HANDOFF.md 2>/dev/null | sed -n 's/^Turn: *\([0-9][0-9]*\).*/\1/p' | head -1)
+          next=$(sed -n 's/^Turn: *\([0-9][0-9]*\).*/\1/p' HANDOFF.md | head -1)
+          if [ -z "$next" ]; then
+            err "HANDOFF.md needs a 'Turn: N' line."
+          elif [ -n "$prev" ] && [ "$next" != "$((prev + 1))" ]; then
+            err "HANDOFF.md says Turn: $next, but the last turn was $prev — this should be Turn: $((prev + 1))."
+          fi
+
+          # 4. Commit subject matches
+          subject=$(git log -1 --format=%s HEAD)
+          if [ -n "$next" ] && ! echo "$subject" | grep -Eq "^Turn $next: .+"; then
+            err "Commit subject must start with 'Turn $next: ' (got: '$subject')."
+          fi
+
+          # 5. Rules are host-only
+          host=$(git show "$base":PLAYERS.md 2>/dev/null | sed -n 's/^Host: *@\([A-Za-z0-9-]*\).*/\1/p' | head -1)
+          author=$(echo "$AUTHOR" | tr '[:upper:]' '[:lower:]')
+          if [ "$author" != "$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" ] \
+             && [ "$author" != "$(echo "$host" | tr '[:upper:]' '[:lower:]')" ]; then
+            ruled=$(echo "$changed" | grep -E '^(\.github/|AGENTS\.md$|CLAUDE\.md$|README\.md$|PLAYERS\.md$|GAME\.md$)' || true)
+            if [ -n "$ruled" ]; then
+              err "Only the host can change the rules. Revert these files, or propose the change in HANDOFF.md / an issue instead:"
+              echo "$ruled" | sed 's/^/  /'
+            fi
+          fi
+
+          if [ "$fail" = 0 ]; then
+            echo "✅ Valid turn ($subject). Merge with 'Rebase and merge' and pass it on."
+          fi
+          exit $fail

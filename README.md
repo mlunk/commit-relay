@@ -122,7 +122,8 @@ gh pr create --fill
 | Branch includes the latest `main` | Only play when the turn is assigned to you |
 | `HANDOFF.md` rewritten, `Turn:` +1 | Build on the last turn; don't wipe it out |
 | Subject starts with `Turn N:` | No secrets or personal data, ever |
-| Players don't touch `.github/`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `PLAYERS.md`, `GAME.md` | |
+| Players change only `project/` and `HANDOFF.md` | |
+| No agent instructions or config (`CLAUDE.md`, `.claude/`, `.mcp.json`…), even in `project/` | |
 
 ## License
 

@@ -6,10 +6,11 @@ name: Relay Turn Check
 #   2. Built on the current tip of main (rebase if someone merged before you).
 #   3. HANDOFF.md was rewritten, and its "Turn:" number is the previous turn + 1.
 #   4. The commit subject starts with "Turn N:" matching HANDOFF.md.
-#   5. Only the host may touch the rules: .github/, AGENTS.md, CLAUDE.md,
-#      README.md, PLAYERS.md, GAME.md. The host is the "Host:" line in
-#      PLAYERS.md on main (so a PR can't make its author the host), or the
-#      repo owner.
+#   5. Players change only project/ and HANDOFF.md, and never add agent
+#      instructions or config (AGENTS.md, CLAUDE.md, .claude/, .mcp.json…),
+#      even inside project/. Everything else is the host's. The host is the
+#      "Host:" line in PLAYERS.md on main (so a PR can't make its author the
+#      host), or the repo owner.
 #
 # It runs on `pull_request` (not `pull_request_target`), so it has a read-only
 # token and no secrets. It only reads git history.
@@ -75,15 +76,25 @@ jobs:
             err "Commit subject must start with 'Turn $next: ' (got: '$subject')."
           fi
 
-          # 5. Rules are host-only
+          # 5. Players change only project/ and HANDOFF.md; the rest is the
+          #    host's. Agent instruction and config files are never a player's,
+          #    even inside project/: the next player's agent would load them.
           host=$(git show "$base":PLAYERS.md 2>/dev/null | sed -n 's/^Host: *@\([A-Za-z0-9-]*\).*/\1/p' | head -1)
           author=$(echo "$AUTHOR" | tr '[:upper:]' '[:lower:]')
           if [ "$author" != "$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" ] \
              && [ "$author" != "$(echo "$host" | tr '[:upper:]' '[:lower:]')" ]; then
-            ruled=$(echo "$changed" | grep -E '^(\.github/|AGENTS\.md$|CLAUDE\.md$|README\.md$|PLAYERS\.md$|GAME\.md$)' || true)
-            if [ -n "$ruled" ]; then
-              err "Only the host can change the rules. Revert these files, or propose the change in HANDOFF.md / an issue instead:"
-              echo "$ruled" | sed 's/^/  /'
+            # --no-renames lists both sides of a move, so a rule file can't be
+            # moved into project/.
+            touched=$(git diff --name-only --no-renames "$base"...HEAD)
+            outside=$(echo "$touched" | grep -vE '^(project/|HANDOFF\.md$)' || true)
+            if [ -n "$outside" ]; then
+              err "Players only change project/ and HANDOFF.md; the rest belongs to the host. Revert these files, or propose the change in HANDOFF.md / an issue instead:"
+              echo "$outside" | sed 's/^/  /'
+            fi
+            agent=$(echo "$touched" | grep -iE '(^|/)((AGENTS|CLAUDE|GEMINI)(\.override)?\.md|\.mcp\.json|\.cursorrules|\.envrc)$|(^|/)\.(claude|cursor|codex|gemini|vscode|idea|devcontainer)/' || true)
+            if [ -n "$agent" ]; then
+              err "Agent instructions and editor/agent config aren't part of the project: the next player's agent would load them. Remove these files:"
+              echo "$agent" | sed 's/^/  /'
             fi
           fi
 

@@ -69,7 +69,8 @@ opens one for the next player. You don't need to notify anyone.
 | Branch contains the latest `main` | Two players can't take the same turn |
 | `HANDOFF.md` changes and `Turn:` is the last turn + 1 | The hand-off is the baton |
 | Commit subject starts with `Turn N:` | `git log --oneline` reads as the transcript |
-| Only the host touches `.github/`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `PLAYERS.md`, `GAME.md` | Players play; the host keeps the rules |
+| Players change only `project/` and `HANDOFF.md`; everything else is the host's | Players play; the host keeps the rules |
+| No agent instructions or config anywhere (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/`, `.cursor/`, `.mcp.json`, `.vscode/`…), not even in `project/` | The next player's agent would load them |
 
 ## Soft rules (honor system)
 

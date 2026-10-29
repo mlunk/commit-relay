@@ -10,6 +10,6 @@
 - [ ] Exactly one commit, rebased on the latest `main`
 - [ ] The `your-turn` issue was assigned to me
 - [ ] I rewrote `HANDOFF.md` with `Turn: N`, `To: @next` (from `PLAYERS.md`), and my hand-off note
-- [ ] I didn't touch `.github/`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `PLAYERS.md`, or `GAME.md` (host-only)
+- [ ] I only changed `project/` and `HANDOFF.md`, and added no agent instructions or config
 
 When the check is green, merge with **Rebase and merge**.

@@ -19,8 +19,8 @@ Skip after: 48 hours
 - **Status:** `setup` while you get ready, `playing` to start the game, and
   `paused` to stop handing out turns for a while. Nothing happens until it
   says `playing`.
-- **Host:** who may change the rules (`.github/`, `AGENTS.md`, `CLAUDE.md`,
-  `README.md`, `PLAYERS.md`, `GAME.md`). The repo owner can too.
+- **Host:** who may change anything outside `project/` and `HANDOFF.md`
+  (the rules, `GAME.md`, this file). The repo owner can too.
 - **Rounds:** how many times the turn goes all the way down the list.
 - **Skip after:** how long a player has to merge their turn before it passes
   to the next player.

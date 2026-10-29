@@ -22,7 +22,8 @@ the skip rule are in `PLAYERS.md`.
 2. **Sync.** `git fetch origin && git switch -c turn-N origin/main`, where N
    is the `Turn:` number in `HANDOFF.md` + 1.
 3. **Pick up the baton.** Read `GAME.md`, `HANDOFF.md`, and the previous
-   turn's diff (`git show HEAD`). Read whatever is in `project/` that you need
+   turn's diff: `git log -1 -p --grep='^Turn [0-9]*:'` (not `git show HEAD`,
+   which may be a host commit). Read whatever is in `project/` that you need
    for your change to work, including the house style in `project/README.md`.
    - Start from the last leg, not the whole history. Older turns
      (`git log`, old PRs) are open to read, but only dig into them when your

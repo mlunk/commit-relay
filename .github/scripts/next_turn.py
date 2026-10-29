@@ -88,16 +88,20 @@ def last_turn_number():
 def game_state(players):
     """Replay merged turns. Returns (last turn number, last player index, round)."""
     owner, name = REPO.split("/")
-    query = """query($owner: String!, $name: String!) {
+    query = """query($owner: String!, $name: String!, $endCursor: String) {
       repository(owner: $owner, name: $name) {
-        pullRequests(states: MERGED, baseRefName: "main", last: 100) {
+        pullRequests(states: MERGED, baseRefName: "main", first: 100, after: $endCursor) {
           nodes { mergedAt author { login }
                   commits(last: 1) { nodes { commit { messageHeadline } } } }
+          pageInfo { hasNextPage endCursor }
         }
       }
     }"""
-    prs = json.loads(gh("api", "graphql", "-f", f"query={query}", "-f", f"owner={owner}",
-                        "-f", f"name={name}"))["data"]["repository"]["pullRequests"]["nodes"]
+    # Every page, not just the latest 100: a big group's game (host PRs
+    # included) passes 100, and dropping early turns miscounts the rounds.
+    pages = json.loads(gh("api", "graphql", "--paginate", "--slurp", "-f", f"query={query}",
+                          "-f", f"owner={owner}", "-f", f"name={name}"))
+    prs = [pr for page in pages for pr in page["data"]["repository"]["pullRequests"]["nodes"]]
     # A turn PR is one whose commit subject is "Turn N: ...". The turn check
     # enforces that subject, so this doesn't depend on how the PR was titled.
     turns = sorted((pr["mergedAt"], pr["author"]["login"]) for pr in prs

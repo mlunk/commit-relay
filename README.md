@@ -35,18 +35,45 @@ the rules. It takes about ten minutes.
 ### 1. Make the repo
 
 Click **Use this template → Create a new repository** at the top of this
-page. Public or private both work. Then, in your new repo's **Settings**:
+page. **Don't fork:** forks start with Issues and scheduled Actions turned
+off, so no turns get handed out. Template settings aren't copied either, so
+set them in your new repo. From a clone of it, with the
+[GitHub CLI](https://cli.github.com):
 
-- **General → Pull Requests:** allow only **Rebase merging**, so every turn
-  lands as exactly one commit and `git log` reads as the transcript.
-- **Collaborators:** add each player with **Write** access. They need it to
-  push a branch and merge their own turn.
-- **Branches** (optional): protect `main` and require the
-  `Relay Turn Check` status to pass before merging.
+```bash
+# Rebase merging only: every turn lands as one commit, and git log reads as
+# the transcript. GitHub's default button makes a merge commit, which hides
+# the last turn from the next player.
+gh repo edit --enable-issues --enable-rebase-merge --enable-merge-commit=false \
+  --enable-squash-merge=false --delete-branch-on-merge
+
+# Protect main: turns arrive as PRs, the `turn` check must pass on an
+# up-to-date branch (so two players can't both merge Turn N), and changes
+# to code-owned files need the host's review. Repo admins can bypass.
+gh api -X POST 'repos/{owner}/{repo}/rulesets' --input .github/main-ruleset.json
+```
+
+Then add each player under **Settings → Collaborators** with **Write**
+access. They need it to push a branch and merge their own turn.
+
+Optionally, add `.github/CODEOWNERS` so a player can't loosen the turn check
+in their own PR (a `pull_request` check runs the PR's copy of the workflow):
+
+```
+*           @your-username
+/project/
+/HANDOFF.md
+```
+
+Public repos get rulesets for free. On a private repo they need GitHub Pro
+or a paid org, and the hourly `Next Turn` run uses Actions minutes (each
+run bills as one minute, up to ~720 a month against the 2,000 free).
 
 ### 2. Set up the game
 
-Edit these files (on GitHub or locally) and commit them straight to `main`:
+Edit these files (on GitHub or locally) and commit them to `main`. As an
+admin you can push straight to it, or open a PR: a host PR that doesn't
+touch `HANDOFF.md` counts as a rule change, not a turn.
 
 | File | What to do |
 |---|---|
@@ -63,11 +90,13 @@ Turn 1 starts from nothing.
 
 In `PLAYERS.md`, change `Status: setup` to `Status: playing` and commit to
 `main`. Within a minute the `Next Turn` Action opens "Round 1 · Turn 1 is
-yours" and assigns it to the first player. From then on it runs itself:
+yours" and assigns it to the first player. (It refuses to start while any
+`@your_username`-style placeholder is left.) From then on it runs itself:
 each merged turn opens the next one, slow players get skipped, and after the
 last round it opens a "Game over" issue.
 
-Set `Status: paused` to stop handing out turns for a while.
+Set `Status: paused` to stop handing out turns for a while. The current
+player's clock stops too.
 
 ### Ideas for a first game
 
@@ -75,20 +104,29 @@ What works best is a small canvas with tight constraints, so every turn
 looks like it belongs:
 
 - **A retro game:** an NES-style side-scroller, 256×240 pixels, NES palette
-  only, no build step. (This is where commit relay started, as a game about a black coyote in San Diego.)
+  only, no build step. (This is where commit relay started, as a game
+  about a black coyote in San Diego.)
 - **A story:** one chapter per turn, with a fixed narrator and setting.
 - **A tiny website:** a single HTML page for a made-up business.
 - **A song or poem:** in a text format like ABC notation, or in strict meter.
 - **An API or CLI:** each turn adds one command or endpoint, with tests.
+  Every player's agent will run the last player's code, so suggest a
+  Codespace or container for this one.
 
 ### If something goes wrong
 
-- **No "your turn" issue appeared:** check the **Actions** tab. If `Next Turn`
-  failed with a permissions error, go to **Settings → Actions → General →
-  Workflow permissions**, choose **Read and write**, and run it again from the
-  Actions tab (**Run workflow**).
+- **No "your turn" issue appeared:** check the **Actions** tab. Its log
+  says why: `Status:` isn't `playing`, a placeholder is still in
+  `PLAYERS.md`, or a line it needs is missing. If Actions or Issues are
+  turned off (as they are in a fork), turn them on in **Settings**, then
+  **Run workflow** on `Next Turn`.
 - **A player can't be assigned:** they haven't accepted their collaborator
-  invite yet. The Action retries every hour.
+  invite yet. The Action retries on its next run.
+- **Turns move slowly:** the "hourly" check is best effort. GitHub often
+  runs scheduled workflows every few hours, so a skip can land hours after
+  the window ends. Merges are handled right away.
+- **The game is over but you want more:** delete the "Game over" issue,
+  raise `Rounds:`, and run `Next Turn`.
 - **The game went quiet:** GitHub turns off hourly workflows in public repos
   after 60 days with no commits. Re-enable `Next Turn` in the Actions tab.
 

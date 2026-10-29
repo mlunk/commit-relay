@@ -137,7 +137,13 @@ looks like it belongs:
 **Not a developer?** Open the repo in a coding agent (Claude Code, Cursor,
 Codex) and say *"Take a turn in commit relay."* It shows you where the
 game is and what the last player handed off, then asks what you'd like to
-add. Ask it for more of the story so far any time. Tell it in plain English. Look over what it changed before you merge.
+add. Tell it in plain English, and ask it for more of the story so far
+any time. Look over what it changed before you merge.
+
+**Before your first turn:** accept the collaborator invite (it's in your
+email and at github.com/notifications), install `git` and the
+[GitHub CLI](https://cli.github.com), and run `gh auth login`. Your agent
+uses both to open and merge your turn.
 
 **To see the project** without an agent, click the green **Code** button →
 **Download ZIP**, unzip it, and follow "How to see it" in `GAME.md`.
@@ -148,8 +154,9 @@ add. Ask it for more of the story so far any time. Tell it in plain English. Loo
 git fetch origin && git switch -c turn-N origin/main
 cat GAME.md HANDOFF.md && git log -1 -p --grep='^Turn [0-9]*:'   # the last turn's diff
 # make one change in project/, rewrite HANDOFF.md
-git commit -am "Turn N: what you did"
-gh pr create --fill
+git add -A && git commit -m "Turn N: what you did"   # -A picks up new files too
+git push -u origin HEAD && gh pr create --fill
+gh pr checks --watch && gh pr merge --rebase --delete-branch
 ```
 
 ## Rules at a glance

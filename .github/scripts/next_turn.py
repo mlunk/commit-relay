@@ -223,6 +223,16 @@ def set_body(number, body, title=None):
           input=json.dumps(payload))
 
 
+def hold_clock():
+    """While paused, keep moving the open turn's start time up to now, so the
+    player gets their whole skip window back when the game resumes."""
+    print("PLAYERS.md says Status: paused. No turns move; the current player's clock is held.")
+    for issue in open_issues(TURN_LABEL):
+        if marker(issue).get("assigned", "pending") != "pending":
+            set_body(issue["number"], re.sub(r"(<!-- next-turn .*?assigned=)\S+",
+                                             rf"\g<1>{NOW.isoformat()}", issue["body"]))
+
+
 def close(number, comment):
     write("issue", "close", str(number), "--repo", REPO, "--comment", comment)
 
@@ -257,6 +267,9 @@ def main():
     if not REPO:
         sys.exit("Set GITHUB_REPOSITORY to owner/repo.")
     status = read_status()
+    if status == "paused":
+        hold_clock()
+        return
     if status != "playing":
         print(f"PLAYERS.md says Status: {status}. Set it to 'playing' to hand out turns.")
         return

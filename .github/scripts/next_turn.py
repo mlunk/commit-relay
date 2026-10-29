@@ -143,7 +143,7 @@ def ensure_labels():
               "--description", desc, "--force")
 
 
-def turn_body(players, idx, turn, rnd, rounds, skip, assigned):
+def turn_body(players, idx, turn, rnd, rounds, skip, assigned, after_login):
     login = players[idx]
     nxt, nxt_round = after(players, idx, rnd)
     final = nxt_round > rounds
@@ -186,7 +186,7 @@ No copy of the repo yet? Your agent can clone it: `https://github.com/{REPO}`
 
 **Time:** {skip_line} This issue closes on its own when your turn merges.
 
-<!-- next-turn turn={turn} round={rnd} player={login} assigned={assigned} -->
+<!-- next-turn turn={turn} round={rnd} player={login} assigned={assigned} after={after_login} -->
 """
 
 
@@ -203,16 +203,16 @@ def assign(number, login):
     return any(a["login"].lower() == login.lower() for a in res.get("assignees", []))
 
 
-def open_turn(players, idx, turn, rnd, rounds, skip):
+def open_turn(players, idx, turn, rnd, rounds, skip, after_login):
     login = players[idx]
     title = f"Round {rnd} · Turn {turn} is yours, @{login}"
-    body = turn_body(players, idx, turn, rnd, rounds, skip, "pending")
+    body = turn_body(players, idx, turn, rnd, rounds, skip, "pending", after_login)
     res = json.loads(write("api", "-X", "POST", f"repos/{REPO}/issues", "--input", "-",
                            input=json.dumps({"title": title, "body": body, "labels": [TURN_LABEL]})))
     number = res.get("number", 0)
     print(f"Opened #{number}: {title}")
     if assign(number, login):
-        set_body(number, turn_body(players, idx, turn, rnd, rounds, skip, NOW.isoformat()))
+        set_body(number, turn_body(players, idx, turn, rnd, rounds, skip, NOW.isoformat(), after_login))
     else:
         print(f"@{login} can't be assigned yet (invite not accepted?). Will retry hourly.")
 
@@ -286,8 +286,13 @@ def main():
     print(f"Last turn: {last_turn}. Next: turn {want_turn}, round {want_round}, "
           f"@{players[want_idx]}.")
 
+    # Who played last. An issue opened after someone else (say, the run on a
+    # merge saw the turn number before GitHub marked the PR merged) is
+    # replaced. Skips keep it; older issues without after= are trusted.
+    after_login = players[last_idx] if last_idx is not None else "-"
     issues = open_issues(TURN_LABEL)
-    current = next((i for i in issues if marker(i).get("turn") == str(want_turn)), None)
+    current = next((i for i in issues if marker(i).get("turn") == str(want_turn)
+                    and marker(i).get("after", after_login).lower() == after_login.lower()), None)
 
     # A turn merged since the last issue: close the old issue(s).
     for issue in issues:
@@ -301,7 +306,7 @@ def main():
         return
 
     if current is None:
-        open_turn(players, want_idx, want_turn, want_round, rounds, skip)
+        open_turn(players, want_idx, want_turn, want_round, rounds, skip, after_login)
         return
 
     # The right issue is open. Retry a pending assignment, or skip if time is up.
@@ -310,7 +315,8 @@ def main():
     if m["assigned"] == "pending":
         if assign(current["number"], m["player"]):
             set_body(current["number"],
-                     turn_body(players, idx, want_turn, cur_round, rounds, skip, NOW.isoformat()))
+                     turn_body(players, idx, want_turn, cur_round, rounds, skip, NOW.isoformat(),
+                               after_login))
             print(f"Assigned #{current['number']} to @{m['player']}.")
         return
 
@@ -335,7 +341,7 @@ def main():
           f"@{login}, you're up!")
     assigned = NOW.isoformat() if assign(current["number"], login) else "pending"
     set_body(current["number"],
-             turn_body(players, nxt, want_turn, nxt_round, rounds, skip, assigned),
+             turn_body(players, nxt, want_turn, nxt_round, rounds, skip, assigned, after_login),
              title=f"Round {nxt_round} · Turn {want_turn} is yours, @{login}")
 
 

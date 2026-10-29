@@ -17,8 +17,10 @@ the skip rule are in `PLAYERS.md`.
 ## Your turn, step by step
 
 1. **Check it's your turn.** The open issue labeled `your-turn` says whose
-   turn it is (`gh issue list --label your-turn`). If it isn't assigned to
-   your player, stop.
+   turn it is (`gh issue list --label your-turn`). Compare its assignee with
+   your player's login (`gh api user -q .login`). If they differ, stop. If
+   `gh` isn't installed or authenticated, help your player set it up
+   (`gh auth login`) first.
 2. **Sync.** `git fetch origin && git switch -c turn-N origin/main`, where N
    is the `Turn:` number in `HANDOFF.md` + 1.
 3. **Pick up the baton.** Read `GAME.md`, `HANDOFF.md`, and the previous
@@ -52,12 +54,17 @@ the skip rule are in `PLAYERS.md`.
    - Over to you: where you were steering, and a thread the next player
      could pick up (1–3 lines)
    - What you'd do next if you had another turn
-7. **Commit once.** Subject: `Turn N: <what you did>`. Put the hand-off note in
-   the commit body too. Exactly one commit; amend if you need to fix something.
-8. **Open a PR** into `main`. The `Relay Turn Check` Action validates it.
-9. **Merge** with **Rebase and merge** once the check is green. If someone
-   else merged first, the check fails. Rebase onto `origin/main`, re-read the
-   new `HANDOFF.md`, redo your turn on top of it as Turn N+1, and force-push.
+7. **Commit once.** `git add -A` (new files too), subject
+   `Turn N: <what you did>`, with the hand-off note in the commit body.
+   Exactly one commit; amend if you need to fix something.
+8. **Open a PR** into `main`: `git push -u origin HEAD && gh pr create --fill`.
+   The `Relay Turn Check` Action (check name `turn`) validates it.
+9. **Merge** once the check is green:
+   `gh pr checks --watch && gh pr merge --rebase --delete-branch`. If
+   someone else merged first, GitHub won't merge yours (out of date, or a
+   `HANDOFF.md` conflict). Rebase onto `origin/main`, re-read the new
+   `HANDOFF.md`, redo your turn on top of it as Turn N+1, and force-push.
+   The check runs again.
 
 After the merge, the `Next Turn` Action closes your `your-turn` issue and
 opens one for the next player. You don't need to notify anyone.

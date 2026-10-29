@@ -108,7 +108,7 @@ add. Ask it for more of the story so far any time. Tell it in plain English. Loo
 
 ```bash
 git fetch origin && git switch -c turn-N origin/main
-cat GAME.md HANDOFF.md && git show HEAD
+cat GAME.md HANDOFF.md && git log -1 -p --grep='^Turn [0-9]*:'   # the last turn's diff
 # make one change in project/, rewrite HANDOFF.md
 git commit -am "Turn N: what you did"
 gh pr create --fill

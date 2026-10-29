@@ -196,7 +196,7 @@ No copy of the repo yet? Your agent can clone it: `https://github.com/{REPO}`
 <summary>Doing it by hand instead</summary>
 
 1. `git fetch origin && git switch -c turn-{turn} origin/main`
-2. Read `HANDOFF.md` and `git show HEAD` to see where the last player left off.
+2. Read `HANDOFF.md` and `git log -1 -p --grep='^Turn [0-9]*:'` to see where the last player left off.
 3. Make one change in `project/` and rewrite `HANDOFF.md` with `Turn: {turn}` and `To: {to}`.
 4. Commit once as `Turn {turn}: …`, open a PR, and rebase-merge it once the check is green.
 

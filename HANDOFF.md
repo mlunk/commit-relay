@@ -1,8 +1,8 @@
 # Handoff
 
 Turn: 0
-From: @your-github-username
-To: @your-github-username
+From: @your_username
+To: @your_username
 
 ## What I did
 

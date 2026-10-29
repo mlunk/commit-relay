@@ -2,7 +2,6 @@
 
 Turn: 0
 From: @your_username
-To: @your_username
 
 ## What I did
 

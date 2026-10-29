@@ -105,7 +105,7 @@ jobs:
               err "Players only change project/ and HANDOFF.md; the rest belongs to the host. Revert these files, or propose the change in HANDOFF.md / an issue instead:"
               echo "$outside" | sed 's/^/  /'
             fi
-            agent=$(echo "$touched" | grep -iE '(^|/)((AGENTS|CLAUDE|GEMINI)(\.override)?\.md|\.mcp\.json|\.cursorrules|\.envrc)$|(^|/)\.(claude|cursor|codex|gemini|vscode|idea|devcontainer)/' || true)
+            agent=$(echo "$touched" | grep -iE '(^|/)((AGENTS|CLAUDE|GEMINI)(\.override|\.local)?\.md|\.mcp\.json|\.cursorrules|\.windsurfrules|\.envrc)$|(^|/)\.clinerules(/|$)|(^|/)\.(claude|cursor|codex|gemini|vscode|idea|devcontainer)/' || true)
             if [ -n "$agent" ]; then
               err "Agent instructions and editor/agent config aren't part of the project: the next player's agent would load them. Remove these files:"
               echo "$agent" | sed 's/^/  /'

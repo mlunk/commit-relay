@@ -29,6 +29,7 @@ NOW = datetime.now(timezone.utc)
 TURN_LABEL = "your-turn"
 OVER_LABEL = "game-over"
 MARKER = re.compile(r"<!-- next-turn (.*?) -->")
+LOGIN = re.compile(r"[A-Za-z0-9](?:-?[A-Za-z0-9]){0,38}")
 
 
 def gh(*args, input=None):
@@ -54,7 +55,11 @@ def read_status():
 
 def read_players():
     text = open("PLAYERS.md").read()
-    players = re.findall(r"^\|\s*\d+\s*\|\s*@([A-Za-z0-9-]+)\s*\|", text, re.M)
+    players = re.findall(r"^\|\s*\d+\s*\|\s*@(\S+)\s*\|", text, re.M)
+    bad = [p for p in players if not LOGIN.fullmatch(p)]
+    if bad:
+        sys.exit(f"PLAYERS.md still has placeholders or invalid usernames: "
+                 f"{', '.join('@' + p for p in bad)}. Replace them with real GitHub usernames.")
     rounds = int(re.search(r"^Rounds:\s*(\d+)", text, re.M).group(1))
     skip = int(re.search(r"^Skip after:\s*(\d+)\s*hours?", text, re.M).group(1))
     if not players:

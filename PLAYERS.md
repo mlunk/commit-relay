@@ -4,17 +4,21 @@ Turns go down this list, then wrap back to the top. One pass through the
 list is a round. Only the host edits this file.
 
 Status: setup
-Host: @your-github-username
+Host: @your_username
 Rounds: 3
 Skip after: 48 hours
 
 | # | Player |
 |---|---|
-| 1 | @your-github-username |
-| 2 | @a-friend |
-| 3 | @another-friend |
+| 1 | @your_username |
+| 2 | @player_two |
+| 3 | @player_three |
 
 ## Settings
+
+Replace every `@your_username`-style placeholder with a real GitHub username.
+The underscores make them impossible usernames, so nobody real gets
+mentioned, and the game won't start until they're all gone.
 
 - **Status:** `setup` while you get ready, `playing` to start the game, and
   `paused` to stop handing out turns for a while. Nothing happens until it

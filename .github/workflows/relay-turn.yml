@@ -52,7 +52,7 @@ jobs:
           changed=$(git diff --name-only "$base"...HEAD)
           echo "Changed files:"; echo "$changed" | sed 's/^/  /'
 
-          host=$(git show "$base":PLAYERS.md 2>/dev/null | sed -n 's/^Host: *@\([A-Za-z0-9-]*\).*/\1/p' | head -1)
+          host=$(git show "$base":PLAYERS.md 2>/dev/null | sed -n 's/^Host: *@\([A-Za-z0-9-][A-Za-z0-9-]*\) *$/\1/p' | head -1)
           author=$(echo "$AUTHOR" | tr '[:upper:]' '[:lower:]')
           is_host=0
           if [ "$author" = "$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" ] \

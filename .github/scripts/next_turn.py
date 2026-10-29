@@ -93,7 +93,7 @@ def read_pitch():
 def last_turn_number():
     """The Turn: number in HANDOFF.md on main. The turn check validates it on
     every turn, so it's the source of truth (PR titles are free text)."""
-    m = re.search(r"^Turn:\s*(\d+)", open("HANDOFF.md").read(), re.M)
+    m = re.search(r"^\**Turn:\**\s*(\d+)", open("HANDOFF.md").read(), re.M)
     return int(m.group(1)) if m else 0
 
 

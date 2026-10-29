@@ -45,9 +45,9 @@ the skip rule are in `PLAYERS.md`.
    minute, follow the house style, and update `project/README.md` if what
    the project does or how it's built changed.
 6. **Hand off.** Rewrite `HANDOFF.md` from scratch instead of appending to it:
-   - `Turn: N`, `From: @you` (plus `+ agent` if an agent did the work), and
-     `To: @next`, the player listed after you in `PLAYERS.md` (wrap to the
-     top after the last player)
+   - `Turn: N` and `From: @you` (plus `+ agent` if an agent did the work).
+     Don't name the next player: the `your-turn` issue decides, and skips
+     change it.
    - What you did (1–3 lines)
    - Over to you: where you were steering, and a thread the next player
      could pick up (1–3 lines)

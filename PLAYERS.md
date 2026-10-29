@@ -34,8 +34,8 @@ mentioned, and the game won't start until they're all gone.
 - **Your turn:** when a turn merges, the `Next Turn` Action opens an issue
   titled "Round R · Turn N is yours" and assigns it to the next player.
   GitHub notifies you. The issue closes on its own when your turn merges.
-- **Who's next:** always the player listed after whoever just took a turn.
-  Put them in the `To:` line of your `HANDOFF.md`.
+- **Who's next:** the player listed after whoever just took a turn. The
+  `your-turn` issue is the source of truth, so you don't name them anywhere.
 - **Skipping:** if you haven't merged your turn within the skip window, the
   Action passes the turn to the player after you. You sit out that round.
 - **Game over:** after the last round, the Action opens a "Game over" issue

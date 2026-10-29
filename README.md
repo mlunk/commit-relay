@@ -52,7 +52,7 @@ Edit these files (on GitHub or locally) and commit them straight to `main`:
 |---|---|
 | [`GAME.md`](GAME.md) | Write the pitch: what you're building, plus the constraint that gives it a voice. Say how players can see it. |
 | [`project/README.md`](project/README.md) | Set the house style: the rules every turn has to follow. |
-| [`HANDOFF.md`](HANDOFF.md) | Write the opening hand-off for Turn 1, and set `From:` and `To:`. |
+| [`HANDOFF.md`](HANDOFF.md) | Write the opening hand-off for Turn 1, and set `From:`. |
 | [`PLAYERS.md`](PLAYERS.md) | Set `Host:`, list the players in turn order, and pick rounds and the skip window. |
 
 If you want to set the scene yourself, also put a starting point in

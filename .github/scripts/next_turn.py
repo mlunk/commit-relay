@@ -165,7 +165,6 @@ def turn_body(players, idx, turn, rnd, rounds, skip, assigned, after_login):
     login = players[idx]
     nxt, nxt_round = after(players, idx, rnd)
     final = nxt_round > rounds
-    to = "nobody: this is the last turn of the game!" if final else f"@{players[nxt]}"
     skip_line = (f"you have {int(skip.total_seconds() // 3600)} hours from when this was assigned "
                  f"to you. After that, " + ("the game ends without this turn." if final
                                            else f"the turn passes to @{players[nxt]}."))
@@ -197,7 +196,7 @@ No copy of the repo yet? Your agent can clone it: `https://github.com/{REPO}`
 
 1. `git fetch origin && git switch -c turn-{turn} origin/main`
 2. Read `HANDOFF.md` and `git log -1 -p --grep='^Turn [0-9]*:'` to see where the last player left off.
-3. Make one change in `project/` and rewrite `HANDOFF.md` with `Turn: {turn}` and `To: {to}`.
+3. Make one change in `project/` and rewrite `HANDOFF.md` with `Turn: {turn}`.
 4. Commit once as `Turn {turn}: …`, open a PR, and rebase-merge it once the check is green.
 
 </details>

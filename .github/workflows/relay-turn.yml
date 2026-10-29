@@ -79,8 +79,8 @@ jobs:
           if ! echo "$changed" | grep -qx 'HANDOFF.md'; then
             err "Every turn must rewrite HANDOFF.md — that's the baton you pass to the next player."
           fi
-          prev=$(git show "$base":HANDOFF.md 2>/dev/null | sed -n 's/^Turn: *\([0-9][0-9]*\).*/\1/p' | head -1)
-          next=$(sed -n 's/^Turn: *\([0-9][0-9]*\).*/\1/p' HANDOFF.md | head -1)
+          prev=$(git show "$base":HANDOFF.md 2>/dev/null | sed -n 's/^\**Turn:\** *\([0-9][0-9]*\).*/\1/p' | head -1)
+          next=$(sed -n 's/^\**Turn:\** *\([0-9][0-9]*\).*/\1/p' HANDOFF.md | head -1)
           if [ -z "$next" ]; then
             err "HANDOFF.md needs a 'Turn: N' line."
           elif [ -n "$prev" ] && [ "$next" != "$((prev + 1))" ]; then

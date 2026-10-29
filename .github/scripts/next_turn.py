@@ -50,7 +50,7 @@ def write(*args, input=None):
 
 def read_status():
     m = re.search(r"^Status:\s*(\w+)", open("PLAYERS.md").read(), re.M)
-    return m.group(1).lower() if m else "playing"
+    return m.group(1).lower() if m else "missing (add a 'Status: playing' line)"
 
 
 def read_players():
@@ -60,11 +60,18 @@ def read_players():
     if bad:
         sys.exit(f"PLAYERS.md still has placeholders or invalid usernames: "
                  f"{', '.join('@' + p for p in bad)}. Replace them with real GitHub usernames.")
-    rounds = int(re.search(r"^Rounds:\s*(\d+)", text, re.M).group(1))
-    skip = int(re.search(r"^Skip after:\s*(\d+)\s*hours?", text, re.M).group(1))
     if not players:
         sys.exit("PLAYERS.md has no players.")
-    return players, rounds, timedelta(hours=skip)
+    dupes = sorted({p for p in players if [q.lower() for q in players].count(p.lower()) > 1})
+    if dupes:
+        sys.exit(f"PLAYERS.md lists {', '.join('@' + p for p in dupes)} more than once. "
+                 f"List each player once.")
+    rounds = re.search(r"^Rounds:\s*(\d+)\s*$", text, re.M)
+    skip = re.search(r"^Skip after:\s*(\d+)\s*hours?\s*$", text, re.M)
+    if not rounds or not skip:
+        sys.exit("PLAYERS.md needs a 'Rounds: <number>' line and a 'Skip after: <number> hours' "
+                 "line (hours only, e.g. 'Skip after: 72 hours' for three days).")
+    return players, int(rounds.group(1)), timedelta(hours=int(skip.group(1)))
 
 
 def read_pitch():
@@ -76,7 +83,7 @@ def read_pitch():
         return ""
     m = re.search(r"^## Pitch\s*$(.*?)(?=^## |\Z)", text, re.M | re.S)
     pitch = re.sub(r"<!--.*?-->", "", m.group(1) if m else "", flags=re.S)
-    pitch = re.sub(r"(!\[[^\]]*\])\((?!https?:)/?([^)\s]+)\)",
+    pitch = re.sub(r"(!\[[^\]]*\])\((?!https?:)(?:\.?/)?([^)\s]+)\)",
                    rf"\1(https://github.com/{REPO}/blob/main/\2?raw=true)", pitch)
     return re.sub(r"\n{3,}", "\n\n", pitch).strip()
 
@@ -146,10 +153,12 @@ def marker(issue):
 
 
 def ensure_labels():
+    have = {label["name"] for label in json.loads(gh("label", "list", "--repo", REPO, "--limit", "200",
+                                                      "--json", "name"))}
     for name, color, desc in [(TURN_LABEL, "f9a03f", "Whose turn it is"),
                               (OVER_LABEL, "000000", "The game is finished")]:
-        write("label", "create", name, "--repo", REPO, "--color", color,
-              "--description", desc, "--force")
+        if name not in have:
+            write("label", "create", name, "--repo", REPO, "--color", color, "--description", desc)
 
 
 def turn_body(players, idx, turn, rnd, rounds, skip, assigned, after_login):

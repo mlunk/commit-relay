@@ -262,6 +262,11 @@ def main():
         return
     players, rounds, skip = read_players()
     ensure_labels()
+    # Once "Game over" exists, the game stays over. Without this, a skip on
+    # the last turn would reopen that turn an hour later, forever.
+    if open_issues(OVER_LABEL) or closed_over_exists():
+        print("The game is over. Delete the 'Game over' issue to play on.")
+        return
     last_turn, last_idx, rnd = game_state(players)
     want_idx, want_round = after(players, last_idx, rnd)
     want_turn = last_turn + 1

@@ -12,6 +12,10 @@ name: Relay Turn Check
 #      "Host:" line in PLAYERS.md on main (so a PR can't make its author the
 #      host), or the repo owner.
 #
+# A host PR that leaves HANDOFF.md alone is a rule change, not a turn, and
+# skips these checks. That's how the host changes things once main is
+# protected.
+#
 # It runs on `pull_request` (not `pull_request_target`), so it has a read-only
 # token and no secrets. It only reads git history.
 
@@ -45,6 +49,22 @@ jobs:
           git fetch -q origin main
           base=origin/main
 
+          changed=$(git diff --name-only "$base"...HEAD)
+          echo "Changed files:"; echo "$changed" | sed 's/^/  /'
+
+          host=$(git show "$base":PLAYERS.md 2>/dev/null | sed -n 's/^Host: *@\([A-Za-z0-9-]*\).*/\1/p' | head -1)
+          author=$(echo "$AUTHOR" | tr '[:upper:]' '[:lower:]')
+          is_host=0
+          if [ "$author" = "$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" ] \
+             || [ "$author" = "$(echo "$host" | tr '[:upper:]' '[:lower:]')" ]; then
+            is_host=1
+          fi
+
+          if [ "$is_host" = 1 ] && ! echo "$changed" | grep -qx 'HANDOFF.md'; then
+            echo "✅ Host change, not a turn (HANDOFF.md is untouched). Rebase-merge it like a turn."
+            exit 0
+          fi
+
           # 1. Exactly one commit
           if [ "$COMMITS" != "1" ]; then
             err "A turn is exactly 1 commit; this PR has $COMMITS. Squash locally: git reset --soft origin/main && git commit"
@@ -54,9 +74,6 @@ jobs:
           if ! git merge-base --is-ancestor "$base" HEAD; then
             err "main has moved since you branched — someone else took a turn. Rebase onto origin/main, read the new HANDOFF.md, and redo your turn on top of it."
           fi
-
-          changed=$(git diff --name-only "$base"...HEAD)
-          echo "Changed files:"; echo "$changed" | sed 's/^/  /'
 
           # 3. HANDOFF.md rewritten, turn number incremented
           if ! echo "$changed" | grep -qx 'HANDOFF.md'; then
@@ -79,10 +96,7 @@ jobs:
           # 5. Players change only project/ and HANDOFF.md; the rest is the
           #    host's. Agent instruction and config files are never a player's,
           #    even inside project/: the next player's agent would load them.
-          host=$(git show "$base":PLAYERS.md 2>/dev/null | sed -n 's/^Host: *@\([A-Za-z0-9-]*\).*/\1/p' | head -1)
-          author=$(echo "$AUTHOR" | tr '[:upper:]' '[:lower:]')
-          if [ "$author" != "$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" ] \
-             && [ "$author" != "$(echo "$host" | tr '[:upper:]' '[:lower:]')" ]; then
+          if [ "$is_host" = 0 ]; then
             # --no-renames lists both sides of a move, so a rule file can't be
             # moved into project/.
             touched=$(git diff --name-only --no-renames "$base"...HEAD)

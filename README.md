@@ -56,11 +56,14 @@ gh api -X POST 'repos/{owner}/{repo}/rulesets' --input .github/main-ruleset.json
 Then add each player under **Settings → Collaborators** with **Write**
 access. They need it to push a branch and merge their own turn.
 
-Optionally, add `.github/CODEOWNERS` so a player can't loosen the turn check
-in their own PR (a `pull_request` check runs the PR's copy of the workflow):
+Then add `.github/CODEOWNERS`, with your own username in place of
+`@your_username`. Don't skip this: a `pull_request` check runs the PR's own
+copy of the workflow, so without it a player could loosen the turn check in
+their own PR. With it, anything outside `project/` and `HANDOFF.md` needs
+your review, which the ruleset above enforces:
 
 ```
-*           @your-username
+*           @your_username
 /project/
 /HANDOFF.md
 ```
